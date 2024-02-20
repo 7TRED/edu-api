@@ -2,6 +2,7 @@ import azure.functions as func
 import logging
 import json
 from chatbot import get_completion_from_messages
+from chatbot_teacher import get_completion_from_messages as get_completion_from_messages_teacher
 from qa import answerQuery
 from ytsummarizer import generate_summary
 
@@ -68,6 +69,29 @@ def YTTrigger(req: func.HttpRequest) -> func.HttpResponse:
         req_body = req.get_json()
         query = req_body["url"]
         response_content = generate_summary(query)
+        response = {
+            "role": "assistant",
+            "content": response_content
+        }
+
+        return func.HttpResponse(
+            json.dumps(response
+                       ),
+            status_code=200
+        )
+
+    except ValueError:
+        return func.HttpResponse(json.dumps(response))
+
+
+@app.route(route="ChatBotTeacherTrigger")
+def ChatBotTeacherTrigger(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info('Python HTTP trigger function processed a request.')
+    response = dict()
+    try:
+        req_body = req.get_json()
+        response_content = get_completion_from_messages_teacher(
+            req_body["context"])
         response = {
             "role": "assistant",
             "content": response_content
